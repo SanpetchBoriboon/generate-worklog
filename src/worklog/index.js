@@ -2,8 +2,7 @@ const XLSX = require("xlsx");
 const dateFns = require("date-fns");
 
 class Worklog {
-	constructor() {
-	}
+	constructor() {}
 
 	generateWorklog(fileName) {
 		try {
@@ -12,18 +11,22 @@ class Worklog {
 			const sheetName = workbookExcel.SheetNames[0];
 			const sheetData = XLSX.utils.sheet_to_json(workbookExcel.Sheets[sheetName]);
 
-			const worklogSheet = sheetData.map((col) => {
-				let timeSpent = col["Time Spent (seconds)"] / 3600;
-				const worklogCol = {};
-				worklogCol["Name"] = col["Author"];
-				worklogCol["ISSUEKEY"] = col["Issue Key"];
-				worklogCol["Subtask Name"] = col["Issue Summary"];
-				worklogCol["Description"] = col["Comment"];
-				worklogCol["Date"] = dateFns.format(new Date(col["Started at"]), "dd/MM/yyyy");
-				worklogCol["Time Spent"] = parseFloat(timeSpent).toFixed(1) + "h";
-				return worklogCol;
-			});
-
+			const worklogSheet = sheetData
+				.sort((a, b) => {
+					return new Date(a["Started at"]) - new Date(b["Started at"]);
+				})
+				.map((col) => {
+					let timeSpent = col["Time Spent (seconds)"] / 3600;
+					const worklogCol = {};
+					worklogCol["Name"] = col["Author"];
+					worklogCol["ISSUEKEY"] = col["Issue Key"];
+					worklogCol["Subtask Name"] = col["Issue Summary"];
+					worklogCol["Description"] = col["Comment"];
+					worklogCol["Date"] = dateFns.format(new Date(col["Started at"]), "dd/MM/yyyy");
+					worklogCol["Time Spent"] = parseFloat(timeSpent).toFixed(1) + "h";
+					return worklogCol;
+				});
+				
 			const workbook = XLSX.utils.book_new();
 			const worksheet = XLSX.utils.json_to_sheet(worklogSheet);
 			XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
